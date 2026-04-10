@@ -3,34 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SYNTRO FINAL-FIX 30A</title>
+    <title>SYNTRO OMNI-LINK 30A</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { background: #e0e0e0; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 10px; }
-        #map { height: 350px; border-radius: 20px; box-shadow: 8px 8px 16px #bebebe; border: 4px solid #fff; margin-bottom: 15px; }
+        body { background: #1a1a1a; color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 10px; }
+        #map { height: 350px; border-radius: 20px; border: 2px solid #333; margin-bottom: 15px; }
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 15px; }
-        .card { background: #e0e0e0; padding: 15px; border-radius: 15px; box-shadow: 6px 6px 12px #bebebe; text-align: center; }
-        .val { display: block; font-size: 20px; font-weight: bold; color: #1a5276; }
-        .lab { font-size: 9px; font-weight: bold; color: #7f8c8d; }
-        .btn-ready { background: #27ae60; color: white; border: none; padding: 20px; border-radius: 15px; width: 100%; font-weight: bold; cursor: pointer; font-size: 16px; margin-bottom: 10px; box-shadow: 4px 4px 10px rgba(0,0,0,0.2); }
-        #status { text-align: center; font-weight: bold; font-size: 13px; color: #d35400; padding: 10px; }
+        .card { background: #252525; padding: 15px; border-radius: 15px; text-align: center; border: 1px solid #444; }
+        .val { display: block; font-size: 20px; font-weight: bold; color: #3498db; }
+        .lab { font-size: 9px; text-transform: uppercase; color: #888; }
+        .btn-omni { background: #27ae60; color: white; border: none; padding: 20px; border-radius: 15px; width: 100%; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.3s; }
+        .btn-omni:hover { background: #2ecc71; }
+        #status { text-align: center; font-size: 12px; margin: 10px; color: #f1c40f; }
     </style>
 </head>
 <body>
 
 <div style="max-width: 1000px; margin: auto;">
-    <h3 style="text-align:center; color:#2c3e50;">SYNTRO ACADEMY: AUDITORÍA TOTAL 30A</h3>
+    <h3 style="text-align:center;">SYNTRO ACADEMY: AUDITORÍA 30 AÑOS</h3>
     <div id="map"></div>
     
-    <button class="btn-ready" onclick="obtenerDatosYa()">⚡ ACTIVAR AUDITORÍA (NASA CLOUD)</button>
-    <div id="status">POR FAVOR, TOQUE UN PUNTO EN EL MAPA</div>
+    <button class="btn-omni" onclick="superConexion()">🚀 INICIAR ESCANEO MULTI-CANAL</button>
+    <div id="status">POR FAVOR, MARQUE UN PUNTO EN EL MAPA</div>
 
     <div class="grid" id="dash" style="display:none;">
-        <div class="card"><span class="lab">LLUVIA ANUAL</span><span id="v-prec" class="val">--</span><span class="lab">mm</span></div>
-        <div class="card"><span class="lab">RAD. SOLAR</span><span id="v-rad" class="val">--</span><span class="lab">kW/m²/d</span></div>
-        <div class="card"><span class="lab">TEMP. MÁX</span><span id="v-temp" class="val">--</span><span class="lab">°C</span></div>
-        <div class="card"><span class="lab">HUMEDAD</span><span id="v-hum" class="val">--</span><span class="lab">%</span></div>
+        <div class="card"><span class="lab">Lluvia Total</span><span id="v-prec" class="val">--</span><span class="lab">mm</span></div>
+        <div class="card"><span class="lab">Rad. Solar</span><span id="v-rad" class="val">--</span><span class="lab">kW/m²/d</span></div>
+        <div class="card"><span class="lab">Temp. Máx</span><span id="v-temp" class="val">--</span><span class="lab">°C</span></div>
+        <div class="card"><span class="lab">Humedad</span><span id="v-hum" class="val">--</span><span class="lab">%</span></div>
     </div>
 
     <div class="card" style="height: 300px;"><canvas id="chart"></canvas></div>
@@ -38,49 +39,59 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    // TU API KEY INTEGRADA
-    const MY_KEY = 'lp9QmeplVWPMAFSszhurTgCwojxEtvFbc0lxoLeF';
+    const CLAVE = 'lp9QmeplVWPMAFSszhurTgCwojxEtvFbc0lxoLeF';
     const map = L.map('map').setView([10.5, -71.6], 10);
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-    let marker, lat, lon, myChart;
+    let marker, lat, lon, chart;
 
     map.on('click', (e) => {
         lat = e.latlng.lat; lon = e.latlng.lng;
         if(marker) map.removeLayer(marker);
-        marker = L.circleMarker(e.latlng, {radius: 10, color: '#e67e22', fillOpacity: 0.8}).addTo(map);
+        marker = L.circleMarker(e.latlng, {radius: 10, color: '#27ae60'}).addTo(map);
         document.getElementById('status').innerText = `PUNTO LISTO: ${lat.toFixed(4)}, ${lon.toFixed(4)}`;
-        document.getElementById('status').style.color = "#27ae60";
     });
 
-    async function obtenerDatosYa() {
-        if(!lat) return alert("Primero marque un punto en el mapa");
+    async function superConexion() {
+        if(!lat) return;
         const status = document.getElementById('status');
-        status.innerText = "🛰️ SOLICITANDO DATOS A LA NASA (PASANDO POR TÚNEL)...";
+        status.innerText = "🛰️ BUSCANDO CANAL LIBRE EN LA NUBE...";
 
-        // URL LIMPIA PARA CLIMATOLOGÍA
-        const url = `https://power.larc.nasa.gov/api/temporal/climatology/point?parameters=T2M_MAX,RH2M,PRECTOTCORR,ALLSKY_SFC_SW_DW&community=AG&longitude=${lon}&latitude=${lat}&format=JSON&api_key=${MY_KEY}`;
+        const urlBase = `https://power.larc.nasa.gov/api/temporal/climatology/point?parameters=T2M_MAX,RH2M,PRECTOTCORR,ALLSKY_SFC_SW_DW&community=AG&longitude=${lon}&latitude=${lat}&format=JSON&api_key=${CLAVE}`;
 
-        try {
-            // Usamos un proxy público para saltar el bloqueo de CORS si es necesario
-            const proxyUrl = "https://api.allorigins.win/get?url=" + encodeURIComponent(url);
-            
-            const r = await fetch(proxyUrl);
-            const responseData = await r.json();
-            const res = JSON.parse(responseData.contents); // Extraemos el JSON de la NASA
+        // Intentamos por 3 vías al mismo tiempo
+        const vias = [
+            urlBase,
+            "https://api.allorigins.win/get?url=" + encodeURIComponent(urlBase),
+            "https://corsproxy.io/?" + encodeURIComponent(urlBase)
+        ];
 
-            if(res.properties && res.properties.parameter) {
-                pintar(res.properties.parameter);
-            } else {
-                throw new Error();
+        for (let via of vias) {
+            try {
+                status.innerText = "📡 PROBANDO VÍA: " + (vias.indexOf(via) + 1);
+                const r = await fetch(via);
+                let data;
+                if (via.includes("allorigins")) {
+                    const temp = await r.json();
+                    data = JSON.parse(temp.contents);
+                } else if (via.includes("corsproxy")) {
+                    data = await r.json();
+                } else {
+                    data = await r.json();
+                }
+
+                if (data.properties) {
+                    procesar(data.properties.parameter);
+                    return; // Si uno funciona, paramos los demás
+                }
+            } catch (e) {
+                console.log("Vía fallida, intentando siguiente...");
             }
-        } catch(e) {
-            status.innerText = "🔄 EL SERVIDOR TARDÓ EN RESPONDER. INTENTE OTRA VEZ.";
-            status.style.color = "#c0392b";
         }
+        status.innerText = "❌ TODOS LOS CANALES SATURADOS. REINTENTE EN 10 SEGUNDOS.";
     }
 
-    function pintar(p) {
+    function procesar(p) {
         const meses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
         const prec = Object.values(p.PRECTOTCORR).slice(0,12);
         const rad = Object.values(p.ALLSKY_SFC_SW_DW).slice(0,12);
@@ -92,26 +103,16 @@
         document.getElementById('v-rad').innerText = (rad.reduce((a,b)=>a+b, 0)/12).toFixed(2);
         document.getElementById('v-temp').innerText = (temp.reduce((a,b)=>a+b, 0)/12).toFixed(1);
         document.getElementById('v-hum').innerText = (hum.reduce((a,b)=>a+b, 0)/12).toFixed(1);
-        document.getElementById('status').innerText = "✅ DATOS DE 30 AÑOS CARGADOS CON ÉXITO";
+        document.getElementById('status').innerText = "✅ ¡CONEXIÓN ESTABLECIDA!";
 
-        if(myChart) myChart.destroy();
-        myChart = new Chart(document.getElementById('chart'), {
+        if(chart) chart.destroy();
+        chart = new Chart(document.getElementById('chart'), {
             type: 'bar',
             data: {
                 labels: meses,
-                datasets: [
-                    { label: 'Lluvia (mm)', data: prec, backgroundColor: '#1a5276', yAxisID: 'y' },
-                    { label: 'Temp Máx (°C)', data: temp, type: 'line', borderColor: '#e74c3c', yAxisID: 'y1' }
-                ]
+                datasets: [{ label: 'Lluvia (mm)', data: prec, backgroundColor: '#3498db' }]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: { 
-                    y: { beginAtZero: true },
-                    y1: { position: 'right', grid:{display:false} }
-                }
-            }
+            options: { responsive: true, maintainAspectRatio: false }
         });
     }
 </script>
