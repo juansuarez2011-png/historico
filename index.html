@@ -3,114 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SYNTRO FULL-SYNC 30A</title>
+    <title>SYNTRO PRECISION-LINK 30A</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --neu-base: #e0e0e0; --neu-shd: 8px 8px 16px #bebebe, -8px -8px 16px #ffffff; }
-        body { background: var(--neu-base); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 15px; }
-        .master-container { max-width: 1100px; margin: auto; }
-        #map { height: 350px; border-radius: 25px; box-shadow: var(--neu-shd); border: 5px solid #fff; margin-bottom: 20px; }
-        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
-        .stat-card { background: var(--neu-base); padding: 15px; border-radius: 20px; box-shadow: var(--neu-shd); text-align: center; }
-        .val { display: block; font-size: 22px; font-weight: bold; color: #1a5276; }
-        .lab { font-size: 10px; font-weight: bold; color: #7f8c8d; text-transform: uppercase; }
-        .btn-sync { background: #1a5276; color: white; border: none; padding: 18px; border-radius: 15px; cursor: pointer; width: 100%; font-weight: bold; font-size: 16px; box-shadow: var(--neu-shd); margin-bottom: 20px; }
-        .chart-card { background: var(--neu-base); padding: 20px; border-radius: 25px; box-shadow: inset 6px 6px 12px #bebebe, inset -6px -6px 12px #ffffff; height: 350px; }
+        :root { --main: #1a5276; --bg: #e0e0e0; --shadow: 8px 8px 16px #bebebe, -8px -8px 16px #ffffff; }
+        body { background: var(--bg); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 15px; }
+        #map { height: 350px; border-radius: 20px; box-shadow: var(--shadow); border: 4px solid #fff; margin-bottom: 20px; }
+        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .card { background: var(--bg); padding: 15px; border-radius: 15px; box-shadow: var(--shadow); text-align: center; }
+        .val { display: block; font-size: 20px; font-weight: bold; color: var(--main); }
+        .lab { font-size: 10px; font-weight: bold; color: #7f8c8d; }
+        .btn-link { background: var(--main); color: white; border: none; padding: 18px; border-radius: 15px; width: 100%; font-weight: bold; cursor: pointer; box-shadow: var(--shadow); margin-bottom: 20px; font-size: 16px; }
+        .chart-box { background: var(--bg); padding: 15px; border-radius: 20px; box-shadow: inset 5px 5px 10px #bebebe, inset -5px -5px 10px #ffffff; height: 320px; }
     </style>
 </head>
 <body>
 
-<div class="master-container">
-    <h2 style="text-align:center; color:#2c3e50; margin-bottom:20px;">AUDITORÍA BIOCLIMÁTICA 30 AÑOS</h2>
+<div style="max-width: 1100px; margin: auto;">
+    <h2 style="text-align:center; color:#2c3e50;">SYNTRO: AUDITORÍA 30 AÑOS (CONEXIÓN DIRECTA)</h2>
     <div id="map"></div>
     
-    <button class="btn-sync" onclick="sincronizarNASA()">⚡ CONECTAR API NASA POWER (30A)</button>
-    <div id="log" style="text-align:center; font-size:12px; color:#27ae60; margin-bottom:10px; font-weight:bold;">LISTO: SELECCIONE UN PUNTO</div>
+    <button class="btn-link" onclick="obtenerHistorial()">⚡ SINCRONIZAR HISTORIAL NASA (30A)</button>
+    <div id="status" style="text-align:center; font-size:12px; font-weight:bold; color:#d35400; margin-bottom:10px;">SELECCIONE UBICACIÓN EN EL MAPA</div>
 
-    <div class="dashboard-grid" id="stats" style="display:none;">
-        <div class="stat-card"><span class="lab">Lluvia Anual</span><span id="res-prec" class="val">--</span><span class="lab">mm</span></div>
-        <div class="stat-card"><span class="lab">Temp. Media</span><span id="res-temp" class="val">--</span><span class="lab">°C</span></div>
-        <div class="stat-card"><span class="lab">Rad. Solar</span><span id="res-rad" class="val">--</span><span class="lab">kW/m²/d</span></div>
-        <div class="stat-card"><span class="lab">Hum. Rel.</span><span id="res-hum" class="val">--</span><span class="lab">%</span></div>
-        <div class="stat-card"><span class="lab">Viento 2m</span><span id="res-wind" class="val">--</span><span class="lab">m/s</span></div>
+    <div class="dashboard" id="panel" style="display:none;">
+        <div class="card"><span class="lab">PREC. TOTAL ANUAL</span><span id="prec-total" class="val">--</span><span class="lab">mm</span></div>
+        <div class="card"><span class="lab">RAD. SOLAR MEDIA</span><span id="rad-media" class="val">--</span><span class="lab">kW/m²/d</span></div>
+        <div class="card"><span class="lab">HUMEDAD MEDIA</span><span id="hum-media" class="val">--</span><span class="lab">%</span></div>
+        <div class="card"><span class="lab">VIENTO MEDIA</span><span id="wind-media" class="val">--</span><span class="lab">m/s</span></div>
     </div>
 
-    <div class="chart-card">
-        <canvas id="canvasForense"></canvas>
+    <div class="chart-box">
+        <canvas id="graficaHistórica"></canvas>
     </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    const map = L.map('map').setView([10.5, -71.6], 11);
+    const map = L.map('map').setView([10.5, -71.6], 10);
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}').addTo(map);
 
-    let marker, lat, lon, myChart;
+    let marker, lat, lon, chart;
 
     map.on('click', (e) => {
         lat = e.latlng.lat; lon = e.latlng.lng;
         if(marker) map.removeLayer(marker);
-        marker = L.circleMarker(e.latlng, {radius: 10, color: '#e74c3c', fillOpacity:0.8}).addTo(map);
-        document.getElementById('log').innerText = `COORDENADAS: ${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+        marker = L.circleMarker(e.latlng, {radius: 9, color: '#e74c3c'}).addTo(map);
+        document.getElementById('status').innerText = `COORDENADAS FIJADAS: ${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+        document.getElementById('status').style.color = "#27ae60";
     });
 
-    async function sincronizarNASA() {
-        if(!lat) return alert("Haga clic en el mapa primero.");
-        document.getElementById('log').innerText = "⏳ DESCARGANDO DATOS HISTÓRICOS 1996-2026...";
+    async function obtenerHistorial() {
+        if(!lat) return alert("Por favor, marque un punto en el mapa.");
+        document.getElementById('status').innerText = "⏳ DESCARGANDO DATOS DESDE NASA POWER (ESTO PUEDE TARDAR 5s)...";
 
-        // API de Climatología (Promedios de 30 años procesados)
-        const api_url = `https://power.larc.nasa.gov/api/temporal/climatology/point?parameters=T2M,RH2M,PRECTOTCORR,ALLSKY_SFC_SW_DW,WS2M&community=AG&longitude=${lon}&latitude=${lat}&format=JSON`;
+        // Endpoint de Climatología: Menos propenso a errores de servidor
+        const url = `https://power.larc.nasa.gov/api/temporal/climatology/point?parameters=T2M,RH2M,PRECTOTCORR,ALLSKY_SFC_SW_DW,WS2M&community=AG&longitude=${lon}&latitude=${lat}&format=JSON`;
 
         try {
-            const respuesta = await fetch(api_url);
-            const raw = await respuesta.json();
-            procesar(raw.properties.parameter);
-        } catch(error) {
-            document.getElementById('log').innerText = "❌ ERROR DE SERVIDOR. REINTENTE.";
+            const resp = await fetch(url);
+            if(!resp.ok) throw new Error("Servidor ocupado");
+            const data = await resp.json();
+            procesar(data.properties.parameter);
+        } catch(e) {
+            document.getElementById('status').innerText = "❌ ERROR: NASA OCUPADA. REINTENTE EN UN MOMENTO.";
+            document.getElementById('status').style.color = "#c0392b";
         }
     }
 
     function procesar(p) {
         const meses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
-        
-        // Extraemos los 12 meses de cada parámetro
-        const d_prec = Object.values(p.PRECTOTCORR).slice(0, 12);
-        const d_temp = Object.values(p.T2M).slice(0, 12);
-        const d_rad  = Object.values(p.ALLSKY_SFC_SW_DW).slice(0, 12);
-        const d_hum  = Object.values(p.RH2M).slice(0, 12);
-        const d_wind = Object.values(p.WS2M).slice(0, 12);
+        const v_prec = Object.values(p.PRECTOTCORR).slice(0, 12);
+        const v_temp = Object.values(p.T2M).slice(0, 12);
+        const v_rad  = Object.values(p.ALLSKY_SFC_SW_DW).slice(0, 12);
+        const v_hum  = Object.values(p.RH2M).slice(0, 12);
+        const v_wind = Object.values(p.WS2M).slice(0, 12);
 
-        // Actualizar tarjetas de resultados
-        document.getElementById('stats').style.display = 'grid';
-        document.getElementById('res-prec').innerText = d_prec.reduce((a,b)=>a+b, 0).toFixed(1);
-        document.getElementById('res-temp').innerText = (d_temp.reduce((a,b)=>a+b, 0)/12).toFixed(1);
-        document.getElementById('res-rad').innerText  = (d_rad.reduce((a,b)=>a+b, 0)/12).toFixed(2);
-        document.getElementById('res-hum').innerText  = (d_hum.reduce((a,b)=>a+b, 0)/12).toFixed(1);
-        document.getElementById('res-wind').innerText = (d_wind.reduce((a,b)=>a+b, 0)/12).toFixed(2);
+        document.getElementById('panel').style.display = 'grid';
+        document.getElementById('prec-total').innerText = v_prec.reduce((a,b)=>a+b, 0).toFixed(1);
+        document.getElementById('rad-media').innerText  = (v_rad.reduce((a,b)=>a+b, 0)/12).toFixed(2);
+        document.getElementById('hum-media').innerText  = (v_hum.reduce((a,b)=>a+b, 0)/12).toFixed(1);
+        document.getElementById('wind-media').innerText = (v_wind.reduce((a,b)=>a+b, 0)/12).toFixed(2);
         
-        document.getElementById('log').innerText = "✅ DATOS SINCRONIZADOS EXITOSAMENTE";
+        document.getElementById('status').innerText = "✅ DATOS SINCRONIZADOS CON ÉXITO";
 
-        // Renderizar Gráfica Forense
-        if(myChart) myChart.destroy();
-        const ctx = document.getElementById('canvasForense').getContext('2d');
-        myChart = new Chart(ctx, {
+        if(chart) chart.destroy();
+        chart = new Chart(document.getElementById('graficaHistórica'), {
             type: 'bar',
             data: {
                 labels: meses,
                 datasets: [
-                    { label: 'Lluvia (mm)', data: d_prec, backgroundColor: '#1a5276', yAxisID: 'y' },
-                    { label: 'Temp Media (°C)', data: d_temp, type: 'line', borderColor: '#e74c3c', yAxisID: 'y1' },
-                    { label: 'Humedad (%)', data: d_hum, type: 'line', borderColor: '#27ae60', borderDash: [5,5], yAxisID: 'y1' }
+                    { label: 'Lluvia (mm)', data: v_prec, backgroundColor: '#1a5276', yAxisID: 'y' },
+                    { label: 'Temp (°C)', data: v_temp, type: 'line', borderColor: '#e74c3c', yAxisID: 'y1' }
                 ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: { 
-                    y: { beginAtZero: true, title: {display:true, text:'Precipitación (mm)'} },
-                    y1: { position: 'right', grid: {display:false}, title: {display:true, text:'Temp / Hum'} }
+                    y: { beginAtZero: true },
+                    y1: { position: 'right', grid: {display:false} }
                 }
             }
         });
